@@ -4,17 +4,19 @@ Template.postEdit.events({
 
         var currentPostId = this._id;
 
-        var postProperties = {
+        var post = {
             url: $(e.target).find('[name=url]').val(),
             title: $(e.target).find('[name=title]').val()
         }
 
-        Posts.update(currentPostId, {$set: postProperties}, function(error) {
-            if (error) {
-                alert(error.reason);
-            } else {
-                Router.go('postPage', {_id: currentPostId});
-            }
+        Meteor.call('postEdit', post, function(error, result) {
+            if (error) 
+                return alert(error.reason);
+
+            if(result.postExists)
+                console.log('This link has already been posted')
+
+            Router.go('postPage', {_id: currentPostId});
         })
     },
 
