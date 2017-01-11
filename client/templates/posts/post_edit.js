@@ -1,22 +1,23 @@
 Template.postEdit.events({
-    'submit form': function(e) {
+    'submit form': function(e, t) {
         e.preventDefault();
 
         var currentPostId = this._id;
 
         var post = {
+            _id: currentPostId,
             url: $(e.target).find('[name=url]').val(),
             title: $(e.target).find('[name=title]').val()
         }
 
         Meteor.call('postEdit', post, function(error, result) {
-            if (error) 
-                return alert(error.reason);
+            if (isKnownError(error)) {
+                return sAlert.error(error.reason);
+            } else if (error) {
+                return sAlert.error("An unknown error occurred while saving the post");
+            } 
 
-            if(result.postExists)
-                console.log('This link has already been posted')
-
-            Router.go('postPage', {_id: currentPostId});
+            Router.go('postPage', {_id: result._id});
         })
     },
 
