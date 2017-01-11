@@ -1,3 +1,16 @@
+Template.postSubmit.onCreated(function() {
+    Session.set('postSubmitErrors', {});
+});
+
+Template.postSubmit.helpers({
+    errorMessage: function(field) {
+        return Session.get('postSubmitErrors')[field]
+    },
+    errorClass: function(field) {
+        return !!Session.get('postSubmitErrors')[field] ? 'has-error' : '';
+    }
+});
+
 Template.postSubmit.events({
     'submit form': function(e){
         e.preventDefault();
@@ -7,12 +20,16 @@ Template.postSubmit.events({
             title: $(e.target).find('[name=title]').val()
         };
 
-        Meteor.call('postInsert', post, function(error, result){
-            if( error )
-                return sAlert.error(error.reason);
+        var errors = validatePost(post);
+        if (errors.title || errors.url)
+            return Session.set('postSubmitErrors', errors);
 
-            if ( result.postExists )
-                sAlert.error('This link has already been posted')
+        Meteor.call('postInsert', post, function(error, result){
+            if (isKnownError(error)) {
+                return sAlert.error(error.reason);
+            } else if (error) {
+                return sAlert.error("An unknown error occurred while saving the post");
+            } 
 
             Router.go('postPage', {_id: result._id});
         })
